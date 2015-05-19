@@ -1,0 +1,14 @@
+machine:
+  services:
+    - docker
+dependencies:
+  cache_directories:
+    - "deps"
+  override:
+    - docker info
+    - docker pull rfkelly/pypyjs-build
+    - make fetch_externals
+test:
+  override:
+    - make build
+    - make bench

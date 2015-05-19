@@ -54,6 +54,7 @@ endif
 EMCC = $(DOCKER) emcc
 PYTHON = $(DOCKER) python
 PYPY = $(DOCKER) pypy
+EXTERNALS = deps
 
 
 # The default target puts a built interpreter locally in ./lib.
@@ -116,29 +117,44 @@ release-debug: ./build/pyhp-debug.js-$(VERSION).tar.gz
 # in "release mode", optimized for deployment to the web.  It trades
 # off some debuggability in exchange for reduced code size.
 
-./build/pyhp.vm.js:
+./build/pyhp.vm.js: fetch_externals
 	mkdir -p build
-	$(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./deps/pyhp/targetpyhp.py
-	#export EMLDFLAGS="--embed-file $(CURDIR)/bench.php@/bench.php" && $(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./deps/pyhp/targetpyhp.py
+	#$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
+	export EMLDFLAGS="--embed-file $(CURDIR)/$(EXTERNALS)/pyhp/bench.php@/bench.php" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
 
 # This builds a debugging-friendly version that is bigger but has e.g.
 # more asserts and better traceback information.
 
-./build/pyhp-debug.vm.js:
+./build/pyhp-debug.vm.js: fetch_externals
 	mkdir -p build
-	export EMLDFLAGS="$$EMLDFLAGS -g2 -s ASSERTIONS=1" && $(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=jit --inline-threshold=25 --output=./build/pyhp-debug.vm.js ./deps/pyhp/targetpyhp.py
+	export EMLDFLAGS="$$EMLDFLAGS -g2 -s ASSERTIONS=1" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --inline-threshold=25 --output=./build/pyhp-debug.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
 
 # This builds a version of pypy.js without its JIT, which is useful for
 # investigating the size or performance of the core interpreter.
 
-./build/pyhp-nojit.vm.js:
+./build/pyhp-nojit.vm.js: fetch_externals
 	mkdir -p build
-	$(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=2 --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp-nojit.vm.js ./deps/pyhp/targetpyhp.py
+	$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=2 --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp-nojit.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
 # Convenience target to launch a shell in the dockerized build environment.
 
 shell:
 	$(DOCKER) /bin/bash
 
+
+bench: ./build/pyhp.vm.js
+	$(DOCKER) node ./build/pyhp.vm.js bench.php
+
+fetch_externals: $(EXTERNALS)/pypy $(EXTERNALS)/pyhp
+
+$(EXTERNALS)/pypy:
+	mkdir -p $(EXTERNALS); \
+	cd $(EXTERNALS); \
+	git clone git@github.com:rfk/pypy.git
+
+$(EXTERNALS)/pyhp:
+	mkdir -p $(EXTERNALS); \
+	cd $(EXTERNALS); \
+	git clone git@github.com:juokaz/pyhp.git
