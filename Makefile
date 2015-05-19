@@ -56,18 +56,6 @@ PYTHON = $(DOCKER) python
 PYPY = $(DOCKER) pypy
 EXTERNALS = deps
 
-
-# The default target puts a built interpreter locally in ./lib.
-
-.PHONY: lib
-lib: ./lib/pyhp.vm.js
-
-./lib/pyhp.vm.js: ./build/pyhp.vm.js
-	cp ./build/pyhp.vm.js ./lib/
-	python ./tools/extract_memory_initializer.py ./lib/pyhp.vm.js
-	rm -rf ./lib/modules/
-	python tools/module_bundler.py init ./lib/modules/
-
 # This makes a releasable tarball containing the compiled pyhp interpreter,
 # supporting javascript code, and the python stdlib modules and tooling.
 
@@ -79,45 +67,12 @@ build: ./build/pyhp.vm.js
 .PHONY: build-debug
 build-debug: ./build/pyhp-debug.vm.js
 
-.PHONY: release
-release: ./build/pyhp.js-$(VERSION).tar.gz
-
-.PHONY: release-nojit
-release-nojit: ./build/pyhp-nojit.js-$(VERSION).tar.gz
-
-.PHONY: release-debug
-release-debug: ./build/pyhp-debug.js-$(VERSION).tar.gz
-
-./build/%.js-$(VERSION).tar.gz: RELNAME = $*.js-$(VERSION)
-./build/%.js-$(VERSION).tar.gz: RELDIR = ./build/$(RELNAME)
-./build/%.js-$(VERSION).tar.gz: ./build/%.vm.js
-	mkdir -p $(RELDIR)/lib
-	# Copy the compiled VM and massage it into the expected shape.
-	cp ./build/$*.vm.js $(RELDIR)/lib/pyhp.vm.js
-	python ./tools/extract_memory_initializer.py $(RELDIR)/lib/pyhp.vm.js
-	# Cromulate for better compressibility, unless it's a debug build.
-	if [ `echo $< | grep -- -debug` ]; then true ; else python ./tools/cromulate.py -w 1000 $(RELDIR)/lib/pyhp.vm.js ; fi
-	# Copy the supporting JS library code.
-	cp ./lib/pyhp.js ./lib/README.txt ./lib/*Promise*.js $(RELDIR)/lib/
-	cp -r ./lib/tests $(RELDIR)/lib/tests
-	# Create an indexed stdlib distribution.
-	python tools/module_bundler.py init $(RELDIR)/lib/modules/
-	# Copy tools for managing the distribution.
-	mkdir -p $(RELDIR)/tools
-	cp ./tools/module_bundler.py $(RELDIR)/tools/
-	# Copy release distribution metadata.
-	cp ./package.json $(RELDIR)/package.json
-	cp ./README.dist.rst $(RELDIR)/README.rst
-	# Tar it up, and we're done.
-	cd ./build && tar -czf $(RELNAME).tar.gz $(RELNAME)
-	rm -rf $(RELDIR)
-
-
 # This is the necessary incantation to build the PyHP js backend
 # in "release mode", optimized for deployment to the web.  It trades
 # off some debuggability in exchange for reduced code size.
 
-./build/pyhp.vm.js: fetch_externals
+./build/pyhp.vm.js:
+	fetch_externals
 	mkdir -p build
 	#$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 	export EMLDFLAGS="--embed-file $(CURDIR)/$(EXTERNALS)/pyhp/bench.php@/bench.php" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
@@ -126,7 +81,8 @@ release-debug: ./build/pyhp-debug.js-$(VERSION).tar.gz
 # This builds a debugging-friendly version that is bigger but has e.g.
 # more asserts and better traceback information.
 
-./build/pyhp-debug.vm.js: fetch_externals
+./build/pyhp-debug.vm.js:
+	fetch_externals
 	mkdir -p build
 	export EMLDFLAGS="$$EMLDFLAGS -g2 -s ASSERTIONS=1" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --inline-threshold=25 --output=./build/pyhp-debug.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
@@ -134,7 +90,8 @@ release-debug: ./build/pyhp-debug.js-$(VERSION).tar.gz
 # This builds a version of pypy.js without its JIT, which is useful for
 # investigating the size or performance of the core interpreter.
 
-./build/pyhp-nojit.vm.js: fetch_externals
+./build/pyhp-nojit.vm.js:
+	fetch_externals
 	mkdir -p build
 	$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=2 --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp-nojit.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
