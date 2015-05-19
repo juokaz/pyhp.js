@@ -10,3 +10,9 @@ Based on [PyPy compiled to JavaScript](https://github.com/rfk/pypyjs).
 
     docker pull rfkelly/pypyjs-build
     make build
+    node build/pyhp.vm.js example.php
+
+Or build the less optimized, but easier to inspect debug version
+
+    make build-debug
+    node build/pyhp-debug.vm.js example.php

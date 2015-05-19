@@ -75,6 +75,9 @@ VERSION = 0.1.0
 .PHONY: build
 build: ./build/pyhp.vm.js
 
+.PHONY: build-debug
+build-debug: ./build/pyhp-debug.vm.js
+
 .PHONY: release
 release: ./build/pyhp.js-$(VERSION).tar.gz
 
@@ -116,6 +119,7 @@ release-debug: ./build/pyhp-debug.js-$(VERSION).tar.gz
 ./build/pyhp.vm.js:
 	mkdir -p build
 	$(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./deps/pyhp/targetpyhp.py
+	#export EMLDFLAGS="--embed-file $(CURDIR)/bench.php@/bench.php" && $(PYPY) ./deps/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./deps/pyhp/targetpyhp.py
 
 
 # This builds a debugging-friendly version that is bigger but has e.g.
