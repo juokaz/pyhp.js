@@ -12,3 +12,6 @@ test:
   override:
     - make build
     - make bench
+general:
+  artifacts:
+    - "build/pyhp.vm.js"
