@@ -62,17 +62,16 @@ EXTERNALS = deps
 VERSION = 0.1.0
 
 .PHONY: build
-build: ./build/pyhp.vm.js
+build: fetch_externals ./build/pyhp.vm.js
 
 .PHONY: build-debug
-build-debug: ./build/pyhp-debug.vm.js
+build-debug: fetch_externals ./build/pyhp-debug.vm.js
 
 # This is the necessary incantation to build the PyHP js backend
 # in "release mode", optimized for deployment to the web.  It trades
 # off some debuggability in exchange for reduced code size.
 
 ./build/pyhp.vm.js:
-	fetch_externals
 	mkdir -p build
 	#$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 	export EMLDFLAGS="--embed-file $(CURDIR)/$(EXTERNALS)/pyhp/bench.php@/bench.php" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
@@ -82,7 +81,6 @@ build-debug: ./build/pyhp-debug.vm.js
 # more asserts and better traceback information.
 
 ./build/pyhp-debug.vm.js:
-	fetch_externals
 	mkdir -p build
 	export EMLDFLAGS="$$EMLDFLAGS -g2 -s ASSERTIONS=1" && $(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=jit --inline-threshold=25 --output=./build/pyhp-debug.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
@@ -91,7 +89,6 @@ build-debug: ./build/pyhp-debug.vm.js
 # investigating the size or performance of the core interpreter.
 
 ./build/pyhp-nojit.vm.js:
-	fetch_externals
 	mkdir -p build
 	$(PYPY) ./$(EXTERNALS)/pypy/rpython/bin/rpython --backend=js --opt=2 --translation-backendopt-remove_asserts --inline-threshold=25 --output=./build/pyhp-nojit.vm.js ./$(EXTERNALS)/pyhp/targetpyhp.py
 
