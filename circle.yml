@@ -7,7 +7,7 @@ dependencies:
   override:
     - docker info
     - docker pull rfkelly/pypyjs-build
-    - make fetch_externals
+    - make update_externals
 test:
   override:
     - make build
