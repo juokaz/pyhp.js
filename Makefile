@@ -104,17 +104,17 @@ bench: ./build/pyhp.vm.js
 fetch_externals: $(EXTERNALS)/pypy $(EXTERNALS)/pyhp
 
 $(EXTERNALS)/pypy:
-	mkdir -p $(EXTERNALS);
-	cd $(EXTERNALS);
+	mkdir -p $(EXTERNALS); \
+	cd $(EXTERNALS); \
 	git clone git@github.com:rfk/pypy.git
 
 $(EXTERNALS)/pyhp:
-	mkdir -p $(EXTERNALS);
-	cd $(EXTERNALS);
+	mkdir -p $(EXTERNALS); \
+	cd $(EXTERNALS); \
 	git clone git@github.com:juokaz/pyhp.git
 
 update_externals: fetch_externals
-	cd $(EXTERNALS)/pypy
+	cd $(EXTERNALS)/pypy; \
 	git pull
-	cd $(EXTERNALS)/pyhp
+	cd $(EXTERNALS)/pyhp; \
 	git pull
