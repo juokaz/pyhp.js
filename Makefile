@@ -32,6 +32,10 @@ DOCKER_IMAGE = rfkelly/pypyjs-build
 
 DOCKER_ARGS = -ti -v /tmp:/tmp -v $(CURDIR):$(CURDIR) -w $(CURDIR) -e "CFLAGS=$$CFLAGS" -e "LDFLAGS=$$LDFLAGS" -e "EMCFLAGS=$$EMCFLAGS" -e "EMLDFLAGS=$$EMLDFLAGS" -e "IN_DOCKER=1"
 
+ifeq ($(CIRCLECI),)
+    DOCKER_ARGS += --rm
+endif
+
 ifeq ($(shell uname -s),Linux)
     # For linux, we can mount /etc/passwd and actually run as the current
     # user, making permissions work nicely on created build artifacts.
